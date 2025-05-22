@@ -1,38 +1,33 @@
-import os
-os.environ["HOME"] = "/tmp"
-os.environ["STREAMLIT_HOME"] = "/tmp"
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-import requests
-from io import StringIO
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import Ridge, LinearRegression, LogisticRegression
 from sklearn.model_selection import train_test_split
+import os
 
-def load_from_github(file_path, sep=","):
-    raw_url = f"https://raw.githubusercontent.com/Sowfia28/Netflix-analysis/main/{file_path}"
-    response = requests.get(raw_url)
-    return pd.read_csv(StringIO(response.text), sep=sep)
-
-# --- Page Setup ---
 st.set_page_config(page_title="NextFlix", layout="centered")
 st.title('NextFlix')
 st.markdown('Predict and Recommend movies based on IMDb and Rotten Tomatoes scores.')
 
-# --- Caching Data Load and Model Training ---
 @st.cache_data
 def load_and_train_models():
-    # GitHub file loads
-    project_df = load_from_github("Project 3_data.csv", sep=",")
-    title_basics = load_from_github("title.basics.tsv", sep="\t")
-    title_ratings = load_from_github("title.ratings.tsv", sep="\t")
-    title_crew = load_from_github("title.crew.tsv", sep="\t")
-    name_basics = load_from_github("name.basics.tsv", sep="\t")
-    df_info = load_from_github("df_info.csv", sep=",")
+    project_df = pd.read_csv("Project_3_data.csv")
 
-    # IMDb Ridge Regression
+    def load_chunked_file(prefix, parts=3):
+        dfs = []
+        for i in range(1, parts + 1):
+            file_name = f"{prefix}_part{i}.tsv"
+            if os.path.exists(file_name):
+                df = pd.read_csv(file_name, sep="\t", na_values="\\N", low_memory=False)
+                dfs.append(df)
+        return pd.concat(dfs, ignore_index=True)
+
+    title_basics = load_chunked_file("title.basics", parts=3)
+    title_ratings = load_chunked_file("title.ratings", parts=2)
+    title_crew = load_chunked_file("title.crew", parts=1)
+    name_basics = load_chunked_file("name.basics", parts=2)
+
     project_df.rename(columns={'title': 'primaryTitle'}, inplace=True)
     df_imdb = pd.merge(project_df, title_basics[['tconst', 'primaryTitle']], on='primaryTitle', how='left')
     df_imdb = pd.merge(df_imdb, title_ratings[['tconst', 'averageRating']], on='tconst', how='left')
@@ -51,7 +46,7 @@ def load_and_train_models():
     imdb_preds = ridge_model_imdb.predict(X_encoded_imdb)
     imdb_threshold = np.median(imdb_preds)
 
-    # Rotten Tomatoes Linear & Logistic
+    df_info = pd.read_csv("movie_info.csv")
     df_info['audience_score'] = df_info['audience_score'].str.rstrip('%').astype(float)
     df_info['critic_score'] = df_info['critic_score'].str.rstrip('%').astype(float)
     project_df['title'] = project_df['title'].str.strip().str.lower()
@@ -66,8 +61,10 @@ def load_and_train_models():
     X_encoded_rt = encoder_rt_linear.fit_transform(X_raw_rt)
     audience_model_rt = LinearRegression().fit(X_encoded_rt, y_rt['audience_score'])
     critic_model_rt = LinearRegression().fit(X_encoded_rt, y_rt['critic_score'])
-    audience_threshold = np.median(audience_model_rt.predict(X_encoded_rt))
-    critic_threshold = np.median(critic_model_rt.predict(X_encoded_rt))
+    audience_preds_all = audience_model_rt.predict(X_encoded_rt)
+    critic_preds_all = critic_model_rt.predict(X_encoded_rt)
+    audience_threshold = np.median(audience_preds_all)
+    critic_threshold = np.median(critic_preds_all)
 
     df_logistic_rt = combined_rt.copy()
     df_logistic_rt['recommend'] = np.where(
@@ -81,12 +78,12 @@ def load_and_train_models():
     X_train_rt, X_test_rt, y_train_rt, y_test_rt = train_test_split(X_encoded_log_rt, y_log_rt, test_size=0.2, random_state=42)
     logistic_model_rt = LogisticRegression(max_iter=1000).fit(X_train_rt, y_train_rt)
 
-    # IMDb Logistic
-    basics = title_basics.astype(str)
-    ratings = title_ratings.astype(str)
-    crew = title_crew.astype(str)
-    names = name_basics.astype(str)
-    project3 = project_df[['title', 'country']]
+    basics = load_chunked_file("title.basics", parts=3)
+    ratings = load_chunked_file("title.ratings", parts=2)
+    crew = load_chunked_file("title.crew", parts=1)
+    names = load_chunked_file("name.basics", parts=2)
+    project3 = pd.read_csv("Project_3_data.csv")
+    project3 = project3[['title', 'country']]
     project3['title'] = project3['title'].str.strip().str.lower()
     movies = basics[basics['titleType'] == 'movie'].copy()
     movies['primaryTitle'] = movies['primaryTitle'].str.strip().str.lower()
@@ -116,19 +113,16 @@ def load_and_train_models():
             logistic_model_rt, encoder_rt_logistic,
             logistic_model_imdb, encoder_imdb_log, features_imdb_log.columns)
 
-# --- Load All Models ---
 (ridge_model_imdb, encoder_imdb_ridge, imdb_threshold, cols_imdb_ridge,
  audience_model_rt, critic_model_rt, encoder_rt_linear, audience_threshold, critic_threshold, cols_rt_linear,
  logistic_model_rt, encoder_rt_logistic,
  logistic_model_imdb, encoder_imdb_log, cols_imdb_logistic) = load_and_train_models()
 
-# --- User Input ---
 st.header("Enter Movie Details:")
 country = st.text_input('Country', help="Example: United States")
 director = st.text_input('Director', help="Example: Christopher Nolan")
 genre = st.text_input('Genre', help="Example: Drama")
 
-# --- Predict Button ---
 if st.button('Predict'):
     if not all([country.strip(), director.strip(), genre.strip()]):
         st.error('Please fill out all fields!')
@@ -170,6 +164,7 @@ if st.button('Predict'):
             })
 
             st.subheader("Prediction Results (Grouped by Model)")
+
             for model in ['Linear', 'Logistic']:
                 st.markdown(f"### {model} Model")
                 filtered = base_results_df[base_results_df['Model'] == model].reset_index(drop=True)
@@ -182,6 +177,5 @@ if st.button('Predict'):
             csv = base_results_df.rename(columns={'Prediction': 'Prediction Value'}).to_csv(index=False)
             st.download_button("Download Results as CSV", data=csv, file_name="recommendation_results.csv", mime="text/csv")
 
-# --- Footer ---
 st.markdown("---")
 st.markdown("Developed by Keerthi and Sowfia")
