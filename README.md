@@ -1,62 +1,54 @@
-# Netflix Recommendation App - Dataset Documentation
+# 🎬 NextFlix: Netflix Content Analysis & Recommendation App
 
-This project uses a combination of Netflix, IMDb, and Rotten Tomatoes datasets to build machine learning models for:
+![Streamlit](https://img.shields.io/badge/Built%20With-Streamlit-orange?style=flat-square&logo=streamlit)
+![Python](https://img.shields.io/badge/Python-3.9+-blue.svg?style=flat-square&logo=python)
+![License](https://img.shields.io/badge/License-Educational-lightgrey?style=flat-square)
+![Status](https://img.shields.io/badge/Project-Academic%20Capstone-success?style=flat-square)
 
-- Genre classification
-- Rating prediction
-- Binary recommendation
-
----
-
-## 1. Primary Dataset (Netflix Metadata)
-
-**File**: `Project_3_data.csv`  
-**Description**:
-- Contains metadata for Netflix titles including:
-  - `title`, `description`, `listed_in` (genre tags)
-  - `director`, `country`, `release_year`
-- Used for TF-IDF-based genre prediction and as input for regression/classification models.
+> A machine learning-powered app that predicts missing metadata, estimates IMDb and Rotten Tomatoes scores, and classifies Netflix content recommendations using integrated datasets.
 
 ---
 
-## 2. IMDb Dataset Files (From IMDb Datasets)
+## 🚀 Live App
 
-| File Name           | Description |
-|--------------------|-------------|
-| `title.ratings.tsv`| IMDb user rating and vote count per title (used as regression target) |
-| `title.basics.tsv` | Basic title info (type, year, runtime, genres) for feature merging |
-| `title.crew.tsv`   | Directors and writers linked to each title |
-| `name.basics.tsv`  | Name, profession, known-for titles of people (actors, directors, etc.) |
+🎯 [**Try the Live App →** https://nextflix.streamlit.app/](https://nextflix.streamlit.app/)  
+📎 Hosted on Streamlit Cloud
 
 ---
 
-## 3. Rotten Tomatoes Dataset (From Kaggle)
+## 📌 Project Summary
 
-**File**: `movie_info.csv`  
-**Description**:
-- Includes critic and audience scores
-- Used to support rating prediction and recommendation model labeling
+This project addresses the issue of missing or inconsistent metadata in Netflix’s global library, which impacts discoverability and personalization. Using data from Netflix (2019), IMDb, and Rotten Tomatoes, we built predictive models to fill gaps and classify content recommendations for better decision-making.
 
 ---
 
-## 4. Machine Learning Tasks Enabled
-
-- **Genre Prediction**: TF-IDF + Logistic Regression (Multi-label)
-- **Rating Prediction**:
-  - IMDb: Ridge Regression (R² = 0.87, RMSE = 0.44)
-  - RT: Linear Regression
-- **Recommendation Classification**:
-  - IMDb model: F1 = 0.70, Recall = 0.73
-  - RT model: Accuracy = 0.70, Recall = 0.48
+### ✅ Features:
+- **Genre Prediction** via TF-IDF + Logistic Regression (multi-label)
+- **IMDb & RT Rating Estimation** via Ridge & Linear Regression
+- **Binary Recommendation Classification** based on IMDb model (F1: 0.70, Recall: 0.73)
+- **Interactive Web App** built with Streamlit for real-time user inputs and predictions
 
 ---
 
-## 5. Streamlit App
-Run the "Group4_Netflix_Recommendation_App.py" using the terminal using the following command:
-**streamlit run app.py**
+## 🖥️ App screenshot
+![image](https://github.com/user-attachments/assets/547ff152-b2fa-4363-a817-8935102c5758)
 
-## Usage Notes
+---
 
-- Ensure all datasets are in the root or data directory
-- Use Git LFS for files larger than 25MB
-- Check the Streamlit app file for expected input formats
+🗂️ Project Structure
+
+├── app.py                          # Streamlit web app
+├── /code/Analysis Code.ipynb       # Model training & logic
+├── /datasets                       # CSV/TSV input files (Netflix, IMDb, RT)
+├── requirements.txt                # Dependency list
+└── README.md                       # You're here!
+
+---
+
+## 🧪 How to Use Locally
+
+```bash
+git clone https://github.com/Sowfia28/Netflix-analysis.git
+cd Netflix-analysis
+pip install -r requirements.txt
+streamlit run app.py
