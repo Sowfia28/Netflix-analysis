@@ -36,7 +36,7 @@ This project addresses the issue of missing or inconsistent metadata in Netflix�
 ---
 
 🗂️ Project Structure
-
+```plaintext
 ├── app.py                          # Streamlit web app
 ├── /code/Analysis Code.ipynb       # Model training & logic
 ├── /datasets                       # CSV/TSV input files (Netflix, IMDb, RT)
