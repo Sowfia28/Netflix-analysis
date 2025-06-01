@@ -19,6 +19,8 @@
 ## 📌 Project Summary
 
 This project addresses the issue of missing or inconsistent metadata in Netflix’s global library, which impacts discoverability and personalization. Using data from Netflix (2019), IMDb, and Rotten Tomatoes, we built predictive models to fill gaps and classify content recommendations for better decision-making.
+![ChatGPT Image May 31, 2025, 09_41_09 PM](https://github.com/user-attachments/assets/28c24aba-97b8-4f03-9093-09250c987196)
+
 
 ---
 
